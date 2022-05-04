@@ -22,17 +22,17 @@ async function main () {
 
         /// authenticated
 
-        const { data: authenticate } = await api.post('/authenticate', { email, password });
+        // const { data: authenticate } = await api.post('/authenticate', { email, password });
 
-        if (register?.user?._id !== authenticate?.user?._id) { throw new Error('user authenticate _id is not compatible for user register _id!') }
+        // if (register?.user?._id !== authenticate?.user?._id) { throw new Error('user authenticate _id is not compatible for user register _id!') }
 
-        if (password !== authenticate?.user?.password) { throw new Error('user password is not incripted in authenticate!') }
+        // if (password !== authenticate?.user?.password) { throw new Error('user password is not incripted in authenticate!') }
 
-        jwt.verify(authenticate?.token, authConfig.secret, (err, decoded) => {
-            if(err) { throw new Error('Token invalid') }
+        // jwt.verify(authenticate?.token, authConfig.secret, (err, decoded) => {
+        //     if(err) { throw new Error('Token invalid') }
             
-            if (authenticate?.user?._id !== decoded.id) { throw new Error('Not is self user!') }
-        })
+        //     if (authenticate?.user?._id !== decoded.id) { throw new Error('Not is self user!') }
+        // })
         
     } catch (err) {
         console.log(err);

@@ -12,6 +12,10 @@ const UserSchema = new Schema({
     required: true,
     lowercase: true
   },
+  verified: { // fazer com que certas ações só vão ser feitas caso esteje verificado
+    type: Boolean,
+    default: false,
+  },
   password: {
     type: String,
     required: true,

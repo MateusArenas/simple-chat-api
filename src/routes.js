@@ -9,6 +9,7 @@ routes.get('/', (req, res) => {
 })
 
 routes.post('/register', AuthController.register)
+routes.get('/verify/:id/:token', AuthController.verify)
 routes.post('/authenticate', AuthController.authenticate)
 
 module.exports = routes
