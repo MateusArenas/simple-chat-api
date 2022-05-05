@@ -55,7 +55,7 @@ class AuthController {
         
             await User.updateOne({ _id: user._id, verified: true, $unset: { verifiedToken: "", expiredAt: "" } });
 
-            res.send("email verified sucessfully");
+            res.send({ message: "email verified sucessfully" });
           } catch (err) { throw new Error("An error occured " + err?.message) }
     }
 
@@ -90,8 +90,8 @@ class AuthController {
 
           const now = new Date()
 
-          const hours = 1;
-          passwordResetExpires.setHours(now.getHours() + hours)
+          const expiresHours = 1;
+          passwordResetExpires.setHours(now.getHours() + expiresHours)
     
           await User.updateOne({ _id: user._id, passwordResetToken, passwordResetExpires })
 
@@ -99,10 +99,15 @@ class AuthController {
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
-            context: { token: passwordResetToken, url: 'http://localhost/resetpass', hours }
+            context: { token: passwordResetToken, url: 'http://localhost/resetpass', expiresHours }
           })
 
-          return res.json("send link in email andress for forgotpass")
+          return res.json({
+            expiresHours,
+            url: 'http://localhost/resetpass',
+            token: passwordResetToken,
+            message: "send link in email andress for forgotpass"
+          })
         } catch (err) { throw new Error('Error on forgot password, try again ' + err?.message) }
     }
 
@@ -121,7 +126,7 @@ class AuthController {
 
             await user.save()
 
-            return res.json('password as reset, using you new password')
+            return res.json({ message: 'password as reset, using you new password' })
         } catch (err) { throw new Error('Cannot reset password, try again ' + err?.message) }
     }
 }
