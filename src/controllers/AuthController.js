@@ -34,7 +34,7 @@ class AuthController {
                 to: email,
                 from: 'MateusArenas97@gmail.com',
                 template: 'auth/verify',
-                context: { url: `http://localhost:80/verify/${verifiedToken}` },
+                context: { url: `http://localhost/verify/${verifiedToken}` },
             })
         
             return res.json({ 
@@ -98,7 +98,7 @@ class AuthController {
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
-            context: { url: `http://localhost/redefinepass/${passwordResetToken}` }
+            context: { token: passwordResetToken, url: 'http://localhost/resetpass' }
           })
 
           return res.json("send link in email andress for forgotpass")
