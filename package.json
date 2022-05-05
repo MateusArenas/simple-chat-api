@@ -15,8 +15,7 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.3.2",
     "nodemailer": "^6.7.4",
-    "nodemailer-express-handlebars": "^5.0.0",
-    "sms-number-verifier": "^0.1.3"
+    "nodemailer-express-handlebars": "^5.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.16"

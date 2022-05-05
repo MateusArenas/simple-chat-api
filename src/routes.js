@@ -17,7 +17,7 @@ routes.post('/authenticate', AuthController.authenticate)
 routes.put('/forgotpass/:email', AuthController.forgotpass)
 routes.post('/resetpass', AuthController.resetpass)
 
-routes.get('/users/:email/redefinepass/:token', function(req, res) {
+routes.get('/redefinepass/:token', function(req, res) {
     res.sendFile(path.join(__dirname, './resources', './auth', '/redefinepass.html'));
 });
 

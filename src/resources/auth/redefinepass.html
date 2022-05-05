@@ -30,11 +30,7 @@
 
                 const password = e.target.elements[0].value;
 
-                const email = location.pathname.split('/')[2]
-                const token = location.pathname.split('/')[4]
-
-
-                console.log({ email,  password, token })
+                const token = location.pathname.split('/')[2]
 
                 try {
 
@@ -47,14 +43,13 @@
                             'Access-Control-Allow-Origin': '*',
                             'Access-Control-Allow-Headers': "*"
                         },
-                        body: JSON.stringify({ email,  password, token })
+                        body: JSON.stringify({ password, token })
                     });
                 } catch (err) {
                     console.log(err);
                 }
 
                 return true
-                // return window.open(`http://localhost/resetpass`, '_blank');
             }
 
 

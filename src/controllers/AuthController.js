@@ -11,17 +11,24 @@ function generateToken (params = {}) {
     })
 }
 
+
 class AuthController {
 
     async register (req, res) { // this controller as register account
         const { email, password } = req.body
         try {
             if (await User.findOne({ email })) { return res.status(400).json({ error: 'User already exists' }) }
+            
+            if (!(/\S+@\S+\.\S+/).test(email)) { return res.status(400).json({ error: 'Error email format' }) }
+            
+            if (password.length < 8) { return res.status(400).json({ error: 'Error password it s smaller than 8' }) }
+
+            transporter.sendMail({ to: email, from: 'MateusArenas97@gmail.com', template: 'auth/welcome' });
 
             const verifiedToken = crypto.randomBytes(20).toString('hex')
 
-            const user = await User.create({ ...req.body, verifiedToken })
-            
+            const user = await User.create({ email, password, verifiedToken })
+
             user.password = password
 
             await transporter.sendMail({
@@ -36,7 +43,7 @@ class AuthController {
                 token: generateToken({ id: user._id })
             })
         } catch (err) {
-            return res.status(400).json({ error: JSON.stringify(err) })
+            return res.status(400).json({ error: 'Not created user ' + err?.message })
         }
     }
 
@@ -98,7 +105,7 @@ class AuthController {
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
-            context: { url: `http://localhost/users/${email}/redefinepass/${passwordResetToken}` }
+            context: { url: `http://localhost/redefinepass/${passwordResetToken}` }
           })
 
           return res.json()
@@ -108,13 +115,11 @@ class AuthController {
     }
 
     async resetpass (req, res) {
-        const { email, token, password } = req.body
+        const { token, password } = req.body
         try {
-            const user = await User.findOne({ email }).select('+passwordResetToken +passwordResetExpires')
+            const user = await User.findOne({ passwordResetToken: token }).select('+passwordResetExpires')
 
-            if (!user) { return res.status(400).json({ error: 'User not found' }) }
-
-            if(token !== user.passwordResetToken) { return res.status(400).json({ error: 'Token invalid' }) }
+            if (!user) { return res.status(400).json({ error: 'User not found or Token invalid' }) }
 
             const now = new Date()
 

@@ -19,7 +19,7 @@ class App {
     }
 
     handleDatabase() {
-        mongoose.connect('mongodb://localhost:27017/simple-chat?retryWrites=true&w=majority', {
+        mongoose.connect('mongodb://localhost:27017/simple-chat-db?retryWrites=true&w=majority', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             ignoreUndefined: true,  
