@@ -90,7 +90,8 @@ class AuthController {
 
           const now = new Date()
 
-          passwordResetExpires.setHours(now.getHours() + 1)
+          const hours = 1;
+          passwordResetExpires.setHours(now.getHours() + hours)
     
           await User.updateOne({ _id: user._id, passwordResetToken, passwordResetExpires })
 
@@ -98,7 +99,7 @@ class AuthController {
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
-            context: { token: passwordResetToken, url: 'http://localhost/resetpass' }
+            context: { token: passwordResetToken, url: 'http://localhost/resetpass', hours }
           })
 
           return res.json("send link in email andress for forgotpass")
