@@ -102,12 +102,7 @@ class AuthController {
             context: { token: passwordResetToken, url: 'http://localhost/resetpass', expiresHours }
           })
 
-          return res.json({
-            expiresHours,
-            url: 'http://localhost/resetpass',
-            token: passwordResetToken,
-            message: "send link in email andress for forgotpass"
-          })
+          return res.json({ message: "send link in email andress for forgotpass" })
         } catch (err) { throw new Error('Error on forgot password, try again ' + err?.message) }
     }
 
