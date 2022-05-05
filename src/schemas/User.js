@@ -41,6 +41,11 @@ const UserSchema = new Schema({
     type: Date,
     select: false
   },
+  expiredAt: { // caso não ative em 7 dias será desativada
+    type: Date,
+    default: Date.now,
+    expires: '7d'
+  },
 }, {
   timestamps: true,
 })

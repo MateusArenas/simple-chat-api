@@ -11,7 +11,6 @@ function generateToken (params = {}) {
     })
 }
 
-
 class AuthController {
 
     async register (req, res) { // this controller as register account
@@ -56,7 +55,7 @@ class AuthController {
 
             if (!user) { return res.status(400).send("User invalid and link") }
         
-            await User.updateOne({ _id: user._id, verified: true, $unset: { verifiedToken: "" } });
+            await User.updateOne({ _id: user._id, verified: true, $unset: { verifiedToken: "", expiredAt: "" } });
 
             res.send("email verified sucessfully");
           } catch (error) {
