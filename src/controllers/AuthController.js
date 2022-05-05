@@ -30,7 +30,7 @@ class AuthController {
 
             user.password = password
 
-            await transporter.sendMail({
+            transporter.sendMail({
                 to: email,
                 from: 'MateusArenas97@gmail.com',
                 template: 'auth/verify',
@@ -100,7 +100,7 @@ class AuthController {
     
           await User.updateOne({ _id: user._id, passwordResetToken, passwordResetExpires })
 
-          await transporter.sendMail({
+          transporter.sendMail({
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
