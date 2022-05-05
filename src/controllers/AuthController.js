@@ -90,7 +90,7 @@ class AuthController {
     
           passwordResetExpires.setHours(now.getHours() + 1)
     
-          await User.findByIdAndUpdate(user._id, { $addFields: { passwordResetToken, passwordResetExpires } })
+          await User.updateOne({ _id: user._id, $addFields: { passwordResetToken, passwordResetExpires } })
     
           await transporter.sendMail({
             to: email,
