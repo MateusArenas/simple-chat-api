@@ -1,3 +1,4 @@
+const path = require('path')
 const { Router } = require('express')
 
 const AuthController = require('./controllers/AuthController')
@@ -15,5 +16,9 @@ routes.post('/authenticate', AuthController.authenticate)
 
 routes.put('/forgotpass/:email', AuthController.forgotpass)
 routes.post('/resetpass', AuthController.resetpass)
+
+routes.get('/users/:email/redefinepass/:token', function(req, res) {
+    res.sendFile(path.join(__dirname, './resources', './auth', '/redefinepass.html'));
+});
 
 module.exports = routes

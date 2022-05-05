@@ -81,34 +81,36 @@ class AuthController {
         const { email } = req.params
         try {
           const user = await User.findOne({ email })
-    
+
           if (!user) { return res.status(400).json({ error: 'User not found' }) }
     
           const passwordResetToken = crypto.randomBytes(20).toString('hex')
-    
+
           const passwordResetExpires = new Date()
-    
+
+          const now = new Date()
+
           passwordResetExpires.setHours(now.getHours() + 1)
     
-          await User.updateOne({ _id: user._id, $addFields: { passwordResetToken, passwordResetExpires } })
-    
+          await User.updateOne({ _id: user._id, passwordResetToken, passwordResetExpires })
+
           await transporter.sendMail({
             to: email,
             from: 'MateusArenas97@gmail.com',
             template: 'auth/forgotpass',
-            context: { token }
+            context: { url: `http://localhost/users/${email}/redefinepass/${passwordResetToken}` }
           })
 
           return res.json()
         } catch (err) {
-          return res.status(400).json({ error: 'Error on forgot password, try again' })
+          return res.status(400).json({ error: 'Error on forgot password, try again '+err?.message })
         }
     }
 
     async resetpass (req, res) {
         const { email, token, password } = req.body
         try {
-            const user = await User.findOne({ email }).select('+passwordResetToken passwordResetExpires')
+            const user = await User.findOne({ email }).select('+passwordResetToken +passwordResetExpires')
 
             if (!user) { return res.status(400).json({ error: 'User not found' }) }
 

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <form onsubmit="return myFunction(event)">
+        <!-- <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username">
+        </div> -->
+    
+        <div>
+            <label for="pass">Password (8 characters minimum):</label>
+            <input type="password" id="pass" name="password"
+                minlength="8" required>
+        </div>
+    
+        <input type="submit" value="Sign in">
+    </form>
+
+    <script>
+
+            async function myFunction(e) {
+                e.preventDefault();
+
+                const password = e.target.elements[0].value;
+
+                const email = location.pathname.split('/')[2]
+                const token = location.pathname.split('/')[4]
+
+
+                console.log({ email,  password, token })
+
+                try {
+
+                    await fetch('http://localhost/resetpass', {
+                        mode: 'cors',
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Headers': "*"
+                        },
+                        body: JSON.stringify({ email,  password, token })
+                    });
+                } catch (err) {
+                    console.log(err);
+                }
+
+                return true
+                // return window.open(`http://localhost/resetpass`, '_blank');
+            }
+
+
+    </script>
+</body>
+</html>
