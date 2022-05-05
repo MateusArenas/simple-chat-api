@@ -81,17 +81,17 @@ class AuthController {
         const { email } = req.params
         try {
           const user = await User.findOne({ email })
-    
+          console.log('buscou o usuario')
           if (!user) { return res.status(400).json({ error: 'User not found' }) }
     
           const passwordResetToken = crypto.randomBytes(20).toString('hex')
-    
+          console.log('token');
           const passwordResetExpires = new Date()
-    
+          console.log('passou do token')
           passwordResetExpires.setHours(now.getHours() + 1)
     
-          await User.findByIdAndUpdate(user._id, { $addFields: { passwordResetToken, passwordResetExpires } })
-    
+          await User.updateOne({ _id: user._id, $addFields: { passwordResetToken, passwordResetExpires } })
+          console.log('passou do Update')
           await transporter.sendMail({
             to: email,
             from: 'MateusArenas97@gmail.com',
