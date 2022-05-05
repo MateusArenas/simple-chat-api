@@ -1,18 +1,24 @@
 const express = require('express');
+const http = require('http');
+const socket = require('socket.io');
 require('express-async-errors')
 const cors = require('cors');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 
 const routes = require('./routes')
+const sockets = require('./events/sockets')
 
 class App {
     constructor() {
         this.express = express();
+        this.server = http.createServer(this.express);
+        this.io = socket(this.server, { cors: { origin: '*' } });
         this.handleMiddlewares();
         this.handleDatabase();
         this.handleRoutes();
         this.handleErrorMiddlewares();
+        this.handleSockets();
     }
 
     handleMiddlewares() {
@@ -44,6 +50,10 @@ class App {
     handleRoutes() {
         this.express.use(routes);
     }
+
+    handleSockets() {
+        this.io.on('connection', sockets)
+    }
 }
 
-module.exports = new App().express;
+module.exports = new App().server;
