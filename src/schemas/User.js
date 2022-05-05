@@ -29,6 +29,10 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Message'
   }],
+  verifiedToken: {
+    type: String,
+    default: Date.now
+  },
   passwordResetToken: {
     type: String,
     default: Date.now
