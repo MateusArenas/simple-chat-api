@@ -51,9 +51,11 @@ class AuthController {
 
             const user = await User.findOne({ verifiedToken: token });
 
-            if (!user) { throw new Error("User invalid and link") }
+            if (!user) { throw new Error("User invalid or link") }
+
+
         
-            await User.updateOne({ _id: user._id, verified: true, $unset: { verifiedToken: "", expiredAt: "" } });
+            await User.updateOne({  _id: user._id }, { verified: true, $unset: { verifiedToken: "", expiredAt: "" } });
 
             res.send({ message: "email verified sucessfully" });
           } catch (err) { throw new Error("An error occured " + err?.message) }
@@ -91,6 +93,7 @@ class AuthController {
           const now = new Date()
 
           const expiresHours = 1;
+
           passwordResetExpires.setHours(now.getHours() + expiresHours)
     
           await User.updateOne({ _id: user._id, passwordResetToken, passwordResetExpires })
@@ -116,7 +119,7 @@ class AuthController {
             if (!user) { throw new Error('User not found or Token invalid') }
 
             const now = new Date()
-
+            
             if(now > user.passwordResetExpires) { throw new Error('Token expired, generate a new one') }
 
             user.password = password

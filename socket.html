@@ -11,21 +11,46 @@
 </head>
 <body>
 
+    <form id="account">
+        <input type="text" name="token" placeholder="Digite o seu token">
+        <button type="submit">Reconectar</button>
+    </form>
+
     <form id="chat">
-        <input type="text" name="username" placeholder="Digite o seu usuario">
+        <input type="text" name="receiver" placeholder="Digite o socket que vc quer destinar">
         <div class="messages"></div>
         <input type="text" name="message" placeholder="Digite sua mensagem">
         <button type="submit">Enviar</button>
     </form>
     
     <script type="text/javascript">
-        var socket = io('http://localhost:80');
+        var token = $('input[name=token').val();
+
+        var socket = io('http://localhost:80', {
+            transportOptions: {
+                polling: {
+                    extraHeaders: {
+                        'authorization': `Bearer ${token}` || 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNzQ4OTVjZWYyNjg1YzkzZjYwZDFmNSIsImlhdCI6MTY1MTg1MzAyMiwiZXhwIjoxNjUxOTM5NDIyfQ.SfDoYJMuBf7V35MwnHJ3bz7i1iIzcZYmWsq9YZoeivU',
+                    },
+                },
+            },
+        });
+
+        $('#account').submit(function (event) {
+            event.preventDefault();
+            var token = $('input[name=token').val();
+    
+            socket.io.opts.transportOptions.polling.extraHeaders['authorization'] = `Bearer ${token}`
+    
+            socket.connect()
+        })
 
         function renderMessage(data) {
-            $('.messages').append(`<div class="message"><strong>${data?.author}</strong>${data?.message}</div>`)
+            $('.messages').append(`<div class="message"><strong>${data?.author}</strong> ${data?.content}</div>`)
         }
 
         socket.on('receivedMessage', data => {
+            console.log(data)
             renderMessage(data)
         })
 
@@ -38,11 +63,11 @@
         $('#chat').submit(function (event) {
             event.preventDefault();
 
-            var author = $('input[name=username').val();
-            var message = $('input[name=message').val();
+            var content = $('input[name=message').val();
+            var receiver = $('input[name=receiver').val();
 
-            if (author.length && message.length) {
-                var data = { author, message }
+            if (content.length) {
+                var data = { content, receiver }
 
                 renderMessage(data)
 

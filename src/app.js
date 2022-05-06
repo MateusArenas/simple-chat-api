@@ -9,6 +9,8 @@ const morgan = require('morgan');
 const routes = require('./routes')
 const sockets = require('./events/sockets')
 
+const authMiddleware = require('./middlewares/sockets/auth')
+
 class App {
     constructor() {
         this.express = express();
@@ -17,10 +19,10 @@ class App {
         this.handleMiddlewares();
         this.handleDatabase();
         this.handleRoutes();
-        this.handleErrorMiddlewares();
         this.handleSockets();
+        this.handleErrorMiddlewares();
     }
-
+ 
     handleMiddlewares() {
         this.express.use(express.json());
         this.express.use(express.urlencoded({ extended: true }));
@@ -52,7 +54,8 @@ class App {
     }
 
     handleSockets() {
-        this.io.on('connection', sockets)
+        this.io.use(authMiddleware);
+        this.io.on('connection', socket => sockets(socket, this.io))
     }
 }
 

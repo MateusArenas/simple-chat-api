@@ -2,9 +2,9 @@ const User = require('../../schemas/User')
 const jwt = require('jsonwebtoken')
 const authConfig = require('../../config/auth.json')
 
-async function authMiddleware (req, res, next) {
+async function authMiddleware (socket, next) {
   try {
-    const authHeader = req.headers.authorization
+    const authHeader = socket.handshake.headers['authorization'];
 
     if(!authHeader) { throw new Error('No token provider') }
 
@@ -25,7 +25,7 @@ async function authMiddleware (req, res, next) {
 
       if (!user.verified) { throw new Error('User is not verified') }
 
-      res.locals.user = decoded.id 
+      socket.user = decoded.id 
       return next()
     })
   } catch(err) { throw new Error(err?.message) }

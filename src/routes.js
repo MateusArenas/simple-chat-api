@@ -2,6 +2,7 @@ const path = require('path')
 const { Router } = require('express')
 
 const AuthController = require('./controllers/AuthController')
+const AuthMiddleware = require('./middlewares/controllers/auth')
 
 const routes = Router()
 
@@ -20,6 +21,5 @@ routes.post('/resetpass', AuthController.resetpass)
 routes.get('/chat', async (req, res) => {
     res.sendFile(path.join(__dirname, '../', '/socket.html'));
 })
-
 
 module.exports = routes
