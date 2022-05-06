@@ -5,22 +5,14 @@ const { host, port, user, pass } = require('../config/mail.json')
 const hbs = require('nodemailer-express-handlebars')
 
 const transport = nodemailer.createTransport({
-  // host,
-  // port,
-  // auth: {
-  //   user,
-  //   pass,
-  // }
-
   service: 'gmail', 
   auth: { 
-    user: 'mateusarenas97@gmail.com', 
-    pass: 'M@thzemp1' 
+    user: 'simplechatpop@gmail.com', 
+    pass: 'simplechatpop123'
   } 
 })
 
 transport.use('compile', hbs({
-  // viewEngine: 'handlebars',
   viewEngine: {
     extName: ".handlebars",
     partialsDir: path.resolve('./src/resources/mail/'),

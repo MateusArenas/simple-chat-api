@@ -22,7 +22,7 @@ class AuthController {
             
             if (password.length < 8) { throw new Error('Error password it s smaller than 8') }
 
-            transporter.sendMail({ to: email, from: 'MateusArenas97@gmail.com', template: 'auth/welcome' });
+            transporter.sendMail({ to: email, from: 'simplechatpop@gmail.com', template: 'auth/welcome' });
 
             const verifiedToken = crypto.randomBytes(20).toString('hex')
 
@@ -32,7 +32,7 @@ class AuthController {
 
             transporter.sendMail({
                 to: email,
-                from: 'MateusArenas97@gmail.com',
+                from: 'simplechatpop@gmail.com',
                 template: 'auth/verify',
                 context: { url: `http://localhost/verify/${verifiedToken}` },
             })
@@ -97,7 +97,7 @@ class AuthController {
 
           transporter.sendMail({
             to: email,
-            from: 'MateusArenas97@gmail.com',
+            from: 'simplechatpop@gmail.com',
             template: 'auth/forgotpass',
             context: { token: passwordResetToken, url: 'http://localhost/resetpass', expiresHours }
           })
@@ -109,6 +109,8 @@ class AuthController {
     async resetpass (req, res) {
         const { token, password } = req.body
         try {
+            if (password.length < 8) { throw new Error('Error password it s smaller than 8') }
+
             const user = await User.findOne({ passwordResetToken: token }).select('+passwordResetExpires')
 
             if (!user) { throw new Error('User not found or Token invalid') }

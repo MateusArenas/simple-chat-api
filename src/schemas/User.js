@@ -21,11 +21,15 @@ const UserSchema = new Schema({
     required: true,
     select: false
   },
-  chats: [{
+  groups: [{
     type: Schema.Types.ObjectId,
-    ref: 'Chat'
+    ref: 'Group'
   }],
   messages: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Message'
+  }],
+  receives: [{
     type: Schema.Types.ObjectId,
     ref: 'Message'
   }],
@@ -41,10 +45,10 @@ const UserSchema = new Schema({
     type: Date,
     select: false
   },
-  expiredAt: { // caso não ative em 7 dias será desativada
+  expiredAt: { // caso não ative em 2 dias será desativada
     type: Date,
     default: Date.now,
-    expires: '7d'
+    expires: '2d'
   },
 }, {
   timestamps: true,

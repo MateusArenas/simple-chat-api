@@ -9,10 +9,10 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
-  chat: {
+  receivers: [{
     type: Schema.Types.ObjectId,
-    ref: 'Chat'
-  },
+    ref: 'User'
+  }],
   reply: {
     type: Schema.Types.ObjectId,
     ref: 'Message'
