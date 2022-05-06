@@ -3,12 +3,15 @@ const { Router } = require('express')
 
 const AuthController = require('./controllers/AuthController')
 const AuthMiddleware = require('./middlewares/controllers/auth')
+const UserController = require('./controllers/UserController')
 
 const routes = Router()
 
 routes.get('/', (req, res) => {
     return res.json({ api: 'run' })
 })
+
+routes.get('/users', AuthMiddleware, UserController.index)
 
 routes.post('/register', AuthController.register)
 routes.get('/verify/:token', AuthController.verify)

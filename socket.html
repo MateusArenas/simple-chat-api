@@ -11,69 +11,114 @@
 </head>
 <body>
 
-    <form id="account">
-        <input type="text" name="token" placeholder="Digite o seu token">
-        <button type="submit">Reconectar</button>
-    </form>
-
-    <form id="chat">
-        <input type="text" name="receiver" placeholder="Digite o socket que vc quer destinar">
-        <div class="messages"></div>
-        <input type="text" name="message" placeholder="Digite sua mensagem">
-        <button type="submit">Enviar</button>
-    </form>
+    <div style="flex: 1; flex-direction: row;">
+        <div>
+            <form id="account">
+                <input type="text" name="token" placeholder="Digite o seu token">
+                <button type="submit">Reconectar</button>
+            </form>
+        
+            <form id="chat">
+                <input type="text" name="receiver" placeholder="Digite o socket que vc quer destinar">
+                <div class="messages"></div>
+                <input type="text" name="message" placeholder="Digite sua mensagem">
+                <button type="submit">Enviar</button>
+            </form>
+        </div>
+        <div style="flex-direction: column;" class="users"></div>
+    </div>
     
     <script type="text/javascript">
-        var token = $('input[name=token').val();
+                    function handleChat (id) {
+                console.log(id);
+                $('input[name=receiver').val(id)
+            }
+        $(document).ready(function () {
+            var user = {}
 
-        var socket = io('http://localhost:80', {
-            transportOptions: {
-                polling: {
-                    extraHeaders: {
-                        'authorization': `Bearer ${token}` || 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNzQ4OTVjZWYyNjg1YzkzZjYwZDFmNSIsImlhdCI6MTY1MTg1MzAyMiwiZXhwIjoxNjUxOTM5NDIyfQ.SfDoYJMuBf7V35MwnHJ3bz7i1iIzcZYmWsq9YZoeivU',
-                    },
-                },
-            },
-        });
-
-        $('#account').submit(function (event) {
-            event.preventDefault();
             var token = $('input[name=token').val();
     
-            socket.io.opts.transportOptions.polling.extraHeaders['authorization'] = `Bearer ${token}`
-    
-            socket.connect()
-        })
-
-        function renderMessage(data) {
-            $('.messages').append(`<div class="message"><strong>${data?.author}</strong> ${data?.content}</div>`)
-        }
-
-        socket.on('receivedMessage', data => {
-            console.log(data)
-            renderMessage(data)
-        })
-
-        socket.on('previousMessages', items => {
-            items?.forEach(item => {
-                renderMessage(item)
+            var socket = io('http://localhost:80', {
+                transportOptions: {
+                    polling: {
+                        extraHeaders: {
+                            'authorization': `Bearer ${token}` || 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNzQ4OTVjZWYyNjg1YzkzZjYwZDFmNSIsImlhdCI6MTY1MTg1MzAyMiwiZXhwIjoxNjUxOTM5NDIyfQ.SfDoYJMuBf7V35MwnHJ3bz7i1iIzcZYmWsq9YZoeivU',
+                        },
+                    },
+                },
             });
-        })
 
-        $('#chat').submit(function (event) {
-            event.preventDefault();
+            setTimeout(() => {
+                var receiver = $('input[name=receiver').val();
+    
+                // aqui está auto entrando em um chat para disparar o received messages
+                socket.emit('Join in Chat', { receiver })
+            }, 1000)
 
-            var content = $('input[name=message').val();
-            var receiver = $('input[name=receiver').val();
 
-            if (content.length) {
-                var data = { content, receiver }
+            $.ajaxSetup({
+                headers : {   
+                    'authorization' : `Bearer ${token}`
+                }
+            });
+                $.getJSON('/users', function (data, textStatus, jqXHR){
+                    data?.forEach(renderUser)
+                    console.log(data);
+                });
 
-                renderMessage(data)
+            $('#account').submit(function (event) {
+                event.preventDefault();
+                var token = $('input[name=token').val();
+        
+                socket.io.opts.transportOptions.polling.extraHeaders['authorization'] = `Bearer ${token}`
+        
+                socket.connect()
+            })
 
-                socket.emit('sendMessage', data)
+            function renderMessage(data) {
+                $('.messages').append(`<div class="message"><strong>${data?.author}</strong> ${data?.content}</div>`)
             }
-        })
+
+            function renderUser(data) {
+                if (data?.self) {
+                    user = data;
+                    return true
+                }
+                $('.users').append(`
+                    <button onclick="handleChat('${data?._id}')">
+                        ${data?.email}
+                    </button>
+                `)
+            }
+
+            socket.on('receivedMessage', data => {
+                console.log(data)
+                renderMessage(data)
+            })
+
+            socket.on('previousChatMessages', items => {
+                console.log(items)
+                items?.forEach(item => {
+                    renderMessage(item)
+                });
+            })
+
+            $('#chat').submit(function (event) {
+                event.preventDefault();
+
+                var content = $('input[name=message').val();
+                var receiver = $('input[name=receiver').val();
+
+                if (content.length) {
+                    var data = { content, receivers: [receiver], author: user?.email }
+
+                    renderMessage(data)
+
+                    socket.emit('sendMessage', data)
+                }
+            })
+    })
+
     </script>
 
     <style>
