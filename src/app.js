@@ -6,7 +6,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const path = require('path')
-const routes = require('./routes')
+const routes = require('./modules/routes')
 
 const { authVerify } = require('./middlewares/auth')
 
