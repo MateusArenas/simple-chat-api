@@ -2,6 +2,9 @@ const { Schema, model } = require('mongoose')
 const bcrypt = require('bcryptjs')
 
 const UserSchema = new Schema({
+  uri: {
+    type: String,
+  },
   name: { 
     type: String, 
     require: true 
@@ -12,7 +15,7 @@ const UserSchema = new Schema({
     required: true,
     lowercase: true
   },
-  verified: { // fazer com que certas ações só vão ser feitas caso esteje verificado
+  verified: { 
     type: Boolean,
     default: false,
   },
@@ -21,6 +24,10 @@ const UserSchema = new Schema({
     required: true,
     select: false
   },
+  groups: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Group'
+  }],
   messages: [{
     type: Schema.Types.ObjectId,
     ref: 'Message'
@@ -33,6 +40,20 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Message'
   }],
+  reactions: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Reaction'
+  }],
+
+  followers: [{//seguidores
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{//seguindo
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+
   verifiedToken: {
     type: String,
     default: Date.now
@@ -45,7 +66,7 @@ const UserSchema = new Schema({
     type: Date,
     select: false
   },
-  expiredAt: { // caso não ative em 2 dias será desativada
+  expiredAt: {
     type: Date,
     default: Date.now,
     expires: '2d'

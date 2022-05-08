@@ -25,11 +25,19 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
-
+  group: { // case group exists fixed in group this message and when organize conersations using criterio in first operations.
+    type: Schema.Types.ObjectId,
+    ref: 'Group'
+  },
   moment: { // case moment exists fixed in moment and direct
     type: Schema.Types.ObjectId,
     ref: 'Moment'
   },
+
+  reactions: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Reaction'
+  }],
 }, {
   timestamps: true,
 })
