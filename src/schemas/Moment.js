@@ -34,6 +34,14 @@ const MomentSchema = new Schema({
     ref: 'Message'
   }],
 
+  onlyfriends: { // visto para somente amigos.
+    type: Boolean, 
+    default: false 
+  },
+  public: { // visto para todos, account, moments, caso false somente para seguidores.
+    type: Boolean, 
+    default: true 
+  },
   reactions: [{
     type: Schema.Types.ObjectId,
     ref: 'Reaction'

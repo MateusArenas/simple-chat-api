@@ -44,12 +44,24 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Reaction'
   }],
-
+  public: { // visto para todos, account, moments, caso false somente para seguidores.
+    type: Boolean, 
+    default: true 
+  },
   followers: [{//seguidores
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
   following: [{//seguindo
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+
+  blocklist: [{//lista de bloqueados
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  friends:  [{//lista de melhores amigos
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],

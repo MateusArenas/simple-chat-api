@@ -21,7 +21,6 @@ const GroupSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Message'
   }],
-
   reactions: [{
     type: Schema.Types.ObjectId,
     ref: 'Reaction'
