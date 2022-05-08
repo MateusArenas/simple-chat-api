@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const morgan = require('morgan');
 const path = require('path')
 const routes = require('./modules/routes')
+const events = require('./modules/events')
 
 const { authVerify } = require('./middlewares/auth')
 
@@ -53,22 +54,8 @@ class App {
     }
 
     handleSockets() {
-        this.io.use(async (socket, next) => await authVerify(socket.handshake.headers['authorization'], 
-            async user => {
-                socket.user = user;
-                next()
-            }
-        ));
-        this.io.on('connection', async socket => {
-            console.log(`socket conected: ${socket.id}`)
-            socket.join(`user ${socket.user}`)
-
-            const folder = "./events";
-            require("fs").readdirSync(path.join(__dirname, folder)).forEach((file) => {
-                const event = require(path.join(__dirname, folder, file));
-                event(socket, this.io)
-            });
-        })
+        this.io.use(events.authMiddleware);
+        this.io.on('connection', socket => events.initialize(socket, this.io))
     }
 }
 

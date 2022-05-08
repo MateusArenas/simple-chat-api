@@ -1,17 +1,21 @@
 const { Schema, model } = require('mongoose')
 
-const MessageSchema = new Schema({
-  content: {
-      type: String,
-      required: true
+const MomentSchema = new Schema({
+  uri: {
+    type: String,
+    required: true
   },
   user: {
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
-  receivers: [{
+  viewers: [{
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+  }],
+  likes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
   }],
   reply: {
     type: Schema.Types.ObjectId,
@@ -25,13 +29,12 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
-
-  moment: { // case moment exists fixed in moment and direct
+  messages: [{
     type: Schema.Types.ObjectId,
-    ref: 'Moment'
-  },
+    ref: 'Message'
+  }],
 }, {
   timestamps: true,
 })
 
-module.exports = model('Message', MessageSchema, 'Message')
+module.exports = model('Moment', MomentSchema, 'Moment')

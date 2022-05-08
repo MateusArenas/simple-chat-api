@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const AuthAsync = require("../middlewares/auth");
 const User = require("../schemas/User");
+const aggregate = require('../utils/aggregate')
 
 class UserService {
 
@@ -8,7 +9,7 @@ class UserService {
         const auth = await AuthAsync.getAuthUser(authorization)
         try {
             const [users] = await User.aggregate([
-                { $match: match },
+                { $match: aggregate.match(match) },
                 {
                     $addFields: {
                         self: { $cond: [{ $eq: ["$_id", new mongoose.Types.ObjectId(auth)] }, true, false] },

@@ -17,6 +17,7 @@ async function MessageEvent (socket, io) {
             return toJSON(message, { author: user.email  })
         }))
 
+        console.log(auth);
         socket.emit('previousMessages', data)
 
     } catch(err) { throw new Error('error previousMessages ' + err?.message) }

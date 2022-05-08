@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const AuthAsync = require("../middlewares/auth");
 const Message = require("../schemas/Message");
 const User = require("../schemas/User");
+const aggregate = require('../utils/aggregate')
 
 class MessageService {
 
@@ -9,7 +10,7 @@ class MessageService {
         const auth = await AuthAsync.getAuthUser(authorization)
         try {
             const [messages] = await Message.aggregate([
-                { $match: match },
+                { $match: aggregate.match(match) },
                 {
                     $addFields: {
                         self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
@@ -38,7 +39,7 @@ class MessageService {
         try {
 
             const [message] = await Message.aggregate([
-                { $match: match },
+                { $match: aggregate.match(match) },
                 {
                     $addFields: {
                         self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
