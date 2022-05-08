@@ -1,28 +1,19 @@
 const path = require('path')
 const { Router } = require('express')
 
-const AuthController = require('./controllers/AuthController')
-const AuthMiddleware = require('./middlewares/controllers/auth')
-const UserController = require('./controllers/UserController')
-
 const routes = Router()
 
-routes.get('/', (req, res) => {
-    return res.json({ api: 'run' })
-})
+const folder = "./routers";
+require("fs").readdirSync(path.join(__dirname, folder)).forEach((file) => {
+    const controller = require(path.join(__dirname, folder, file));
 
-routes.get('/users', AuthMiddleware, UserController.index)
+    Object.keys(controller).forEach(type => { 
+        const method = type.toLowerCase();
 
-routes.post('/register', AuthController.register)
-routes.get('/verify/:token', AuthController.verify)
-
-routes.post('/authenticate', AuthController.authenticate)
-
-routes.put('/forgotpass/:email', AuthController.forgotpass)
-routes.post('/resetpass', AuthController.resetpass)
-
-routes.get('/chat', async (req, res) => {
-    res.sendFile(path.join(__dirname, '../', '/socket.html'));
-})
+        Object.keys(controller[type]).forEach(path => {
+            routes[method](path, controller[type][path])
+        })
+    })
+});
 
 module.exports = routes

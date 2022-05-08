@@ -11,21 +11,21 @@
 </head>
 <body>
 
-    <div style="flex: 1; flex-direction: row;">
-        <div>
-            <form id="account">
-                <input type="text" name="token" placeholder="Digite o seu token">
-                <button type="submit">Reconectar</button>
-            </form>
+    <form id="account">
+        <input style="width: 100%;" type="text" name="token" placeholder="Digite o seu token">
+        <button style="display: none;" type="submit">Reconectar</button>
+    </form>
+    <div class="container-horiz">
+        <div class="users"></div>
+        <div class="main">
         
+            <div class="messages"></div>
             <form id="chat">
-                <input type="text" name="receiver" placeholder="Digite o socket que vc quer destinar">
-                <div class="messages"></div>
+                <input type="hidden" name="receiver" placeholder="Digite o socket que vc quer destinar">
                 <input type="text" name="message" placeholder="Digite sua mensagem">
-                <button type="submit">Enviar</button>
+                <button id="send" type="submit">Enviar</button>
             </form>
         </div>
-        <div style="flex-direction: column;" class="users"></div>
     </div>
     
     <script type="text/javascript">
@@ -33,27 +33,41 @@
                 console.log(id);
                 $('input[name=receiver').val(id)
             }
+
+            function removeMessage(data) {
+                console.log('removendo');
+                $(`#message-${data?._id}`).remove()
+            }
+
+            
+            function handleRemoveMessage (id) {
+                console.log(id);
+                removeMessage({ _id: id })
+                socket.emit('removeMessage', { id })
+            }
+            
         $(document).ready(function () {
             var user = {}
-
+            var messages = []
+            
             var token = $('input[name=token').val();
-    
-            var socket = io('http://localhost:80', {
-                transportOptions: {
-                    polling: {
-                        extraHeaders: {
-                            'authorization': `Bearer ${token}` || 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNzQ4OTVjZWYyNjg1YzkzZjYwZDFmNSIsImlhdCI6MTY1MTg1MzAyMiwiZXhwIjoxNjUxOTM5NDIyfQ.SfDoYJMuBf7V35MwnHJ3bz7i1iIzcZYmWsq9YZoeivU',
-                        },
+
+        var socket = io('http://localhost', {
+            transportOptions: {
+                polling: {
+                    extraHeaders: {
+                        'authorization': `Bearer ${token}` || 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyNzQ4OTVjZWYyNjg1YzkzZjYwZDFmNSIsImlhdCI6MTY1MTg1MzAyMiwiZXhwIjoxNjUxOTM5NDIyfQ.SfDoYJMuBf7V35MwnHJ3bz7i1iIzcZYmWsq9YZoeivU',
                     },
                 },
-            });
+            },
+        });
 
-            setTimeout(() => {
-                var receiver = $('input[name=receiver').val();
+            // setTimeout(() => {
+            //     var receiver = $('input[name=receiver').val();
     
-                // aqui está auto entrando em um chat para disparar o received messages
-                socket.emit('Join in Chat', { receiver })
-            }, 1000)
+            //     // aqui está auto entrando em um chat para disparar o received messages
+            //     socket.emit('joinedInChat', { receiver })
+            // }, 1000)
 
 
             $.ajaxSetup({
@@ -61,10 +75,14 @@
                     'authorization' : `Bearer ${token}`
                 }
             });
+
+            setTimeout(() => {
+                
                 $.getJSON('/users', function (data, textStatus, jqXHR){
-                    data?.forEach(renderUser)
-                    console.log(data);
+                    data?.results?.map(contact => ({ ...contact, lastMessage: messages.reverse().find(message => message?.user === contact?._id ||  message?.receivers?.find(receiver => receiver?._id === contact?._id) ) }))?.forEach(renderUser)
+                    console.log(data?.results);
                 });
+            }, 2000);
 
             $('#account').submit(function (event) {
                 event.preventDefault();
@@ -76,7 +94,13 @@
             })
 
             function renderMessage(data) {
-                $('.messages').append(`<div class="message"><strong>${data?.author}</strong> ${data?.content}</div>`)
+                $('.messages').append(`
+                    <div id="message-${data?._id}" class="message">
+                        <strong>${data?.author}</strong> 
+                        ${data?.content} 
+                        <button onclick="handleRemoveMessage('${data?._id}')">remover</button> 
+                    </div>
+                `)
             }
 
             function renderUser(data) {
@@ -87,6 +111,7 @@
                 $('.users').append(`
                     <button onclick="handleChat('${data?._id}')">
                         ${data?.email}
+                        <p>${data?.lastMessage?.content}</p>
                     </button>
                 `)
             }
@@ -94,10 +119,17 @@
             socket.on('receivedMessage', data => {
                 console.log(data)
                 renderMessage(data)
+                messages.push(data)
             })
 
-            socket.on('previousChatMessages', items => {
+            socket.on('deleteMessage', data => {
+                removeMessage(data)
+                messages = messages.filter(message => message?._id !== data?._id)
+            })
+
+            socket.on('previousMessages', items => {
                 console.log(items)
+                messages = items;
                 items?.forEach(item => {
                     renderMessage(item)
                 });
@@ -132,7 +164,15 @@
   box-sizing: border-box;
 }
 
+.container-horiz {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
 #chat {
+  background-color: antiquewhite;
   height: 100%;
   display: flex;
   justify-content: center;
@@ -140,15 +180,19 @@
   flex-direction: column;
 }
 
+.main {
+    flex: 1;
+}
+
 input {
-  width: 600px;
+  width: 100%;
   border: 1px solid #ddd;
   height: 50px;
   padding: 0 20px;
   font-size: 14px;
 }
 
-button {
+#chat button {
   width: 600px;
   height: 50px;
   font-size: 14px;
@@ -158,6 +202,20 @@ button {
   font-weight: bold;
   color: #FFF;
   margin-top: 10px;
+}
+
+.users{
+    width: 35%;
+}
+
+.users button {
+  width: 100%;
+  text-align: start;
+  font-size: 14px;
+  line-height: 50px;
+  padding: 10px;
+  font-weight: bold;
+  color: black;
 }
 
 .messages {

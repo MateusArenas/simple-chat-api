@@ -1,30 +1,130 @@
+const mongoose = require("mongoose");
+const AuthAsync = require("../middlewares/auth");
 const Message = require("../schemas/Message");
 const User = require("../schemas/User");
 
-async function sendMessage ({ user, content, receivers, reply, mentions }) {
-    try {
+class MessageService {
 
-     if (content?.length < 1) { throw new Error('message content is lower 1 caracters') }
+    async index ({ match, options }, authorization) {
+        const auth = await AuthAsync.getAuthUser(authorization)
+        try {
+            const [messages] = await Message.aggregate([
+                { $match: match },
+                {
+                    $addFields: {
+                        self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
+                    }
+                },
+                {   
+                    $facet: {
+                        results: [],
+                        total: [{ $count: 'count' }]
+                    }
+                },
+                { 
+                    $project: { 
+                        results: '$results', 
+                        total: { $arrayElemAt: ['$total.count', 0] } 
+                    } 
+                },  
+            ])
 
-     if(!receivers?.length) { throw new Error('this message not has receivers') }
+            return messages
+        } catch (err) { throw new Error('Error for index messages ' + err?.message) }
+    }
 
-     const message = await Message.create({ user, content, receivers, reply, mentions })
+    async search ({ match, options }, authorization) {
+        const auth = await AuthAsync.getAuthUser(authorization)
+        try {
 
-     await User.updateOne({ _id: user }, { $push: { messages: message._id } })
+            const [message] = await Message.aggregate([
+                { $match: match },
+                {
+                    $addFields: {
+                        self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
+                    }
+                },
+                {   
+                    $facet: {
+                        results: [],
+                        total: [{ $count: 'count' }]
+                    }
+                },
+                { 
+                    $project: { 
+                        results: '$results', 
+                        total: { $arrayElemAt: ['$total.count', 0] } 
+                    } 
+                },  
+                { $unwind: "$results" }, { $unwind: "$total" },
+                {
+                    $replaceRoot: {
+                        newRoot: {
+                            $mergeObjects: [ "$results", { total: "$total.count" } ]
+                        }
+                    }
+                },
+            ])
 
-     await User.updateOne({ _id: { $in: receivers } }, { $push: { receives: message._id } })
+            return message
+        } catch (err) { throw new Error('Error for search message ' + err?.message) }
+    }
 
-     if (reply) {
-         await Message.updateOne({ _id: reply }, { $push: {  replies: message._id } })
-     }
+    async create ({ user, content, receivers, reply, mentions }) {
+        try {
+    
+         if (content?.length < 1) { throw new Error('message content is lower 1 caracters') }
+    
+         if(!receivers?.length) { throw new Error('this message not has receivers') }
+    
+         const message = await Message.create({ user, content, receivers, reply, mentions })
+    
+         await User.updateOne({ _id: user }, { $push: { messages: message._id } })
+    
+         if (receivers?.length > 0) {
+             await User.updateOne({ _id: { $in: receivers } }, { $push: { receives: message._id } })
+         }
+    
+         if (reply) {
+             await Message.updateOne({ _id: reply }, { $push: {  replies: message._id } })
+         }
+    
+         if (mentions?.length > 0) {
+             await User.updateOne({ _id: { $in: mentions } }, { $push: { mentions: message._id } })
+         }
+    
+         return message;
+    
+        } catch (err) { throw new Error('Error for send message ' + err?.message) }
+    }
 
-     if (mentions?.length > 0) {
-         await User.updateOne({ _id: { $in: mentions } }, { $push: { mentions: message._id } })
-     }
+    async remove ({ _id, user }) {
+        try {
+            const message = await Message.findOne({ _id, user })
+            
+            if (!message) { throw new Error('message not found')}
 
-     return message;
+            await message.remove()
 
-    } catch (err) { throw new Error('Error for send message ' + err?.message) }
+            await User.updateOne({ _id: user }, { $pull: { messages: message._id } })
+        
+            if (message?.receivers?.length > 0) {
+                await User.updateOne({ _id: { $in: message.receivers } }, { $pull: { receives: message._id } })
+            }
+        
+            if (message?.reply) {
+                await Message.updateOne({ _id: message.reply }, { $pull: {  replies: message._id } })
+            }
+        
+            if (message?.mentions?.length > 0) {
+                await User.updateOne({ _id: { $in: message.mentions } }, { $pull: { mentions: message._id } })
+            }
+        
+            return message;
+    
+        } catch (err) { throw new Error('Error for send message ' + err?.message) }
+    }
 }
 
-module.exports = { sendMessage }
+
+module.exports = new MessageService()

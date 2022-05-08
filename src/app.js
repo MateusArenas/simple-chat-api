@@ -5,11 +5,10 @@ require('express-async-errors')
 const cors = require('cors');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
-
+const path = require('path')
 const routes = require('./routes')
-const sockets = require('./events/sockets')
 
-const authMiddleware = require('./middlewares/sockets/auth')
+const { authVerify } = require('./middlewares/auth')
 
 class App {
     constructor() {
@@ -19,8 +18,8 @@ class App {
         this.handleMiddlewares();
         this.handleDatabase();
         this.handleRoutes();
-        this.handleSockets();
         this.handleErrorMiddlewares();
+        this.handleSockets();
     }
  
     handleMiddlewares() {
@@ -54,8 +53,22 @@ class App {
     }
 
     handleSockets() {
-        this.io.use(authMiddleware);
-        this.io.on('connection', socket => sockets(socket, this.io))
+        this.io.use(async (socket, next) => await authVerify(socket.handshake.headers['authorization'], 
+            async user => {
+                socket.user = user;
+                next()
+            }
+        ));
+        this.io.on('connection', async socket => {
+            console.log(`socket conected: ${socket.id}`)
+            socket.join(`user ${socket.user}`)
+
+            const folder = "./events";
+            require("fs").readdirSync(path.join(__dirname, folder)).forEach((file) => {
+                const event = require(path.join(__dirname, folder, file));
+                event(socket, this.io)
+            });
+        })
     }
 }
 
