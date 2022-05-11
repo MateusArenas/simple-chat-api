@@ -28,6 +28,10 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Group'
   }],
+  conversations: [{ 
+    type: Schema.Types.ObjectId,
+    ref: 'Conversation'
+  }],
   messages: [{
     type: Schema.Types.ObjectId,
     ref: 'Message'
@@ -89,8 +93,10 @@ const UserSchema = new Schema({
 
 
 UserSchema.pre('save', async function(next) {
-  const hash = await bcrypt.hash(this.get('password'), 10)
-  this.set('password', hash)
+  if (this.get('password')) {
+    const hash = await bcrypt.hash(this.get('password'), 10)
+    this.set('password', hash)
+  }
 
   next()
 })

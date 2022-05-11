@@ -8,8 +8,8 @@ const MessageRouter = {
                 const messages = await MessageService.index({ match: {} }, authorization)
                 return res.json(messages)
             },
-            ['/:id']: async ({ headers: { authorization } }, res)  => {
-                const message = await MessageService.search({ match: {} }, authorization)
+            ['/:id']: async ({ params, headers: { authorization } }, res)  => {
+                const message = await MessageService.search({ match: { _id: params.id } }, authorization)
                 return res.json(message)
             },
         }

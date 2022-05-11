@@ -29,8 +29,49 @@ class UserService {
                 },  
             ])
         
-            return users
-        } catch (err) { throw new Error('Error for index messages ' + err?.message) }
+            const results = await User.populate(users?.results, [
+                { path: 'conversations', model: 'Conversation'  },
+            ])
+
+            return ({ ...users, results  })
+        } catch (err) { throw new Error('Error for index users ' + err?.message) }
+    }
+
+    async search ({ match, options }, authorization) {
+        const auth = await AuthAsync.getAuthUser(authorization)
+        try {
+
+            const [user] = await User.aggregate([
+                { $match: aggregate.match(match) },
+                {
+                    $addFields: {
+                        self: { $cond: [{ $eq: ["$_id", new mongoose.Types.ObjectId(auth)] }, true, false] },
+                    }
+                },
+                {   
+                    $facet: {
+                        results: [],
+                        total: [{ $count: 'count' }]
+                    }
+                },
+                { 
+                    $project: { 
+                        results: '$results', 
+                        total: { $arrayElemAt: ['$total.count', 0] } 
+                    } 
+                },  
+                { $unwind: "$results" }, { $unwind: "$total" },
+                {
+                    $replaceRoot: {
+                        newRoot: {
+                            $mergeObjects: [ "$results", { total: "$total.count" } ]
+                        }
+                    }
+                },
+            ])
+
+            return user
+        } catch (err) { throw new Error('Error for search user ' + err?.message) }
     }
 }
 

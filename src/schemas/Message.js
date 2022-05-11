@@ -9,6 +9,14 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  viewers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  favorites: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   receivers: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
@@ -25,6 +33,10 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  direct: { 
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   group: { // case group exists fixed in group this message and when organize conersations using criterio in first operations.
     type: Schema.Types.ObjectId,
     ref: 'Group'

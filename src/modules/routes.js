@@ -10,15 +10,17 @@ require("fs").readdirSync(path.join(__dirname, folder)).forEach((file) => {
     Object.keys(controller).forEach(type => { 
         const method = type.toLowerCase();
 
-        Object.keys(controller[type]).forEach(path => {
-            if (typeof controller[type][path] === 'object') {
-                Object.keys(controller[type][path]).forEach(subPath => {
-                    routes[method](path+subPath, controller[type][path][subPath])
-                })
-            } else {
-                routes[method](path, controller[type][path])
-            }
-        })
+        function deepCombine (controller, complexPath) {
+            Object.keys(controller).forEach(path => {
+                if (typeof controller[path] === 'object') {
+                    deepCombine(controller[path], complexPath+path)
+                } else {
+                    routes[method](complexPath+path, controller[path])
+                }
+            })
+        }
+
+        deepCombine(controller[type], '')
     })
 });
 
