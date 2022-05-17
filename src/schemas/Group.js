@@ -17,6 +17,10 @@ const GroupSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  conversations: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Conversation'
+  }],
   messages: [{
     type: Schema.Types.ObjectId,
     ref: 'Message'

@@ -1,15 +1,26 @@
 const { Schema, model } = require('mongoose')
 
 const MessageSchema = new Schema({
+  outstanding: {
+    type: String,
+  },
   content: {
       type: String,
       required: true
   },
+  conversations: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Conversation'
+  }],
   user: {
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
-  viewers: [{
+  deliveries: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  readers: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
@@ -50,6 +61,11 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Reaction'
   }],
+  expiredAt: {
+    type: Date,
+    default: null,
+    expires: '1d'
+  },
 }, {
   timestamps: true,
 })

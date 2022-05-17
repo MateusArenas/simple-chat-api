@@ -70,7 +70,11 @@ class UserService {
                 },
             ])
 
-            return user
+            const result = await User.populate(user, [
+                { path: 'conversations', model: 'Conversation'  },
+            ])
+
+            return result
         } catch (err) { throw new Error('Error for search user ' + err?.message) }
     }
 }

@@ -1,9 +1,10 @@
 
-
 async function DefaultEvent (socket, io) {
+
     socket.on("disconnect", (reason) => {
-        
-        socket.leave(`user ${socket.user}`)
+        socket.leave(`logins ${socket.user}`)
+
+        socket.leaveAll();
 
         console.log('disconnect and leave room', socket.id, reason);
     });

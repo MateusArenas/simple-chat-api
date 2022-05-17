@@ -15,9 +15,9 @@ const MessageRouter = {
         }
     },
     Post: {
-        ['/messages']: async ({ headers: { authorization: token } }, res) => await authVerify(token, 
+        ['/messages']: async ({ headers: { authorization: token }, body }, res) => await authVerify(token, 
             async user => {
-                const message = await MessageService.create({ ...req.body, user })
+                const message = await MessageService.create({ ...body, user })
                 return res.json(message)
             }
         ),

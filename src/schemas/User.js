@@ -32,14 +32,6 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Conversation'
   }],
-  messages: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Message'
-  }],
-  receives: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Message'
-  }],
   mentions: [{
     type: Schema.Types.ObjectId,
     ref: 'Message'

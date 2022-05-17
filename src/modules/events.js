@@ -20,7 +20,8 @@ const events = {
     },
     initialize: (socket, io) => {
         console.log(`socket conected: ${socket.id} | mongoId: ${socket?.user}`)
-        socket.join(`user ${socket.user}`)
+
+        socket.join(`logins ${socket.user}`)
 
         require("fs").readdirSync(path.join(__dirname, folder)).forEach(async file => {
             const event = require(path.join(__dirname, folder, file));

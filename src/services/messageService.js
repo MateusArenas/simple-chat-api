@@ -4,18 +4,53 @@ const Message = require("../schemas/Message");
 const Conversation = require("../schemas/Conversation");
 const User = require("../schemas/User");
 const Group = require("../schemas/Group");
-const aggregate = require('../utils/aggregate')
+const aggregate = require('../utils/aggregate');
+const ConversationService = require("./ConversationService");
 
 class MessageService {
 
-    async index ({ match, options }, authorization) {
+    async index ({ match, options }, authorization) { // busca todos
         const auth = await AuthAsync.getAuthUser(authorization)
         try {
             const [messages] = await Message.aggregate([
                 { $match: aggregate.match(match) },
+                { $sort: { createdAt: -1 } },
+                { $skip: Number(options?.skip) || 0 }, { $limit: Number(options?.limit) || 999999999 },
                 {
                     $addFields: {
                         self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
+                        delivered: { 
+                            $allElementsTrue: {
+                                $reduce: {
+                                    input: { $ifNull: ["$receivers", []] }, initialValue: [],
+                                    in: { 
+                                        $cond: [{ $in: ["$$this", { $ifNull: ["$deliveries", []] }] },
+                                            { $concatArrays : ["$$value", [true]] }, 
+                                            { $concatArrays : ["$$value", [false]] }
+                                        ]
+                                    },
+                                }
+                            },
+                        },
+                        read: { 
+                            $allElementsTrue: {
+                                $reduce: {
+                                    input: { $ifNull: ["$receivers", []] }, initialValue: [],
+                                    in: { 
+                                        $cond: [{ $in: ["$$this", { $ifNull: ["$readers", []] }] },
+                                            { $concatArrays : ["$$value", [true]] }, 
+                                            { $concatArrays : ["$$value", [false]] }
+                                        ]
+                                    },
+                                }
+                            },
+                        },
+                        visualized: {
+                            $reduce: {
+                                input: { $ifNull: [ "$readers", [] ] }, initialValue: false,
+                                in: { $cond: [{ $eq: ["$$this", new mongoose.Types.ObjectId(auth)] }, true, false] }
+                            }
+                        },
                     }
                 },
                 {   
@@ -52,6 +87,38 @@ class MessageService {
                 {
                     $addFields: {
                         self: { $cond: [{ $eq: ["$user", new mongoose.Types.ObjectId(auth)] }, true, false] },
+                        delivered: { 
+                            $allElementsTrue: {
+                                $reduce: {
+                                    input: { $ifNull: ["$receivers", []] }, initialValue: [],
+                                    in: { 
+                                        $cond: [{ $in: ["$$this", { $ifNull: ["$deliveries", []] }] },
+                                            { $concatArrays : ["$$value", [true]] }, 
+                                            { $concatArrays : ["$$value", [false]] }
+                                        ]
+                                    },
+                                }
+                            },
+                        },
+                        read: { 
+                            $allElementsTrue: {
+                                $reduce: {
+                                    input: { $ifNull: ["$receivers", []] }, initialValue: [],
+                                    in: { 
+                                        $cond: [{ $in: ["$$this", { $ifNull: ["$readers", []] }] },
+                                            { $concatArrays : ["$$value", [true]] }, 
+                                            { $concatArrays : ["$$value", [false]] }
+                                        ]
+                                    },
+                                }
+                            },
+                        },
+                        visualized: {
+                            $reduce: {
+                                input: { $ifNull: [ "$readers", [] ] }, initialValue: false,
+                                in: { $cond: [{ $eq: ["$$this", new mongoose.Types.ObjectId(auth)] }, true, false] }
+                            }
+                        },
                     }
                 },
                 {   
@@ -80,18 +147,29 @@ class MessageService {
         } catch (err) { throw new Error('Error for search message ' + err?.message) }
     }
 
-    async create ({ user, content, receivers, reply, mentions, direct, group }) {
+    async create ({ user, content, receivers, reply, mentions, direct, group, outstanding }) {
         try {
             if (content?.length < 1) { throw new Error('message content is lower 1 caracters') }
             
             if(!receivers?.length) { throw new Error('this message not has receivers') }
 
-            if(!direct && !group) { throw new Error('this message is not defined for direct or group') }
+            if (receivers?.length !== (await User.find({ _id: { $in: receivers } })).length) { throw new Error('this some receiver of receivers passed not exists.') }
             
-            const message = await Message.create({ user, content, receivers, reply, mentions, direct, group })
+            if(!direct && !group) { throw new Error('this message is not defined for direct or group') }
+
+            if (direct && !await User.findById(direct)) { throw new Error('this direct passed not exists.') }
+
+            if (group && !await Group.findById(group)) { throw new Error('this group passed not exists.') }
+
+            if (reply && !await Message.findById(reply)) { throw new Error('this reply passed not exists.') }
+
+            if (mentions?.length !== (await User.find({ _id: { $in: mentions } })).length) { throw new Error('this some mention of mentions passed not exists.') }
+
+            const to = [user].concat(receivers?.filter(receiver => receiver !== user))
+            const message = await Message.create({ user, content, receivers: to, reply, mentions, direct, group, outstanding, readers: [user] })
 
             // é criado uma promise com await e é percorrido as contas relacionadas há essa mensagem sem repetir
-            await Promise.all([user].concat(receivers?.filter(receiver => receiver !== user)).map(async account => {
+            await Promise.all(message.receivers?.map(async account => {
                 const creator = message.user; // pega o criador da mensagem
                 const self = creator.equals(account) // verifica se o criador é o mesmo account
 
@@ -103,22 +181,26 @@ class MessageService {
         
                 if (existsConversation) { // caso exista
                     await existsConversation.update({ $push: { messages: message._id } })// é adicionado a mensagem 
+                    // aqui estou atrelando a mensagem as conversas, para poder controlar quando devo retirala caso ninguem tenha mais uma conversa que a prenda
+                    message.conversations.push(existsConversation._id)
                 } else { // caso não
                     // é criado uma conversa com a mesma direção acima e grupo, é criado um array de messages e adicionado nele
-                    const conversation = await Conversation.create({ user: account, direct: direction, group, messages: [message._id] })
+                    const conversation = await ConversationService.create({ user: account, direct: direction, group, messages: [message._id] })
+                    // aqui estou atrelando a mensagem as conversas, para poder controlar quando devo retirala caso ninguem tenha mais uma conversa que a prenda
+                    message.conversations.push(conversation._id)
                     // aqui é adicionado ao array de conversas do usuario essa nova conversa craida acima.
                     await User.updateOne({ _id: account }, { $push: { conversations: conversation._id } })
                 }
+
+                return true
             }))
 
-            await User.updateOne({ _id: user }, { $push: { messages: message._id } })
+            // aqui estou salvando as alterações do push, o bom de fazer isso que ele salva no objeto e no banco as alterações, 
+            //assim n fazendo o processo a cada linha, somente nessa
+            await message.save()
 
             if (group) {
                 await Group.updateOne({ _id: group }, { $push: { messages: message._id } })
-            }
-
-            if (receivers?.length > 0) {
-                await User.updateOne({ _id: { $in: receivers } }, { $push: { receives: message._id } })
             }
 
             if (reply) {
@@ -129,10 +211,18 @@ class MessageService {
                 await User.updateOne({ _id: { $in: mentions } }, { $push: { mentions: message._id } })
             }
 
-        return await Message.populate(message, [{ path: 'user', model: 'User' }]);
+            console.log('dentro length', message?.conversations?.length);
+
+            return await Message.populate(message, [
+                { path: 'user', model: 'User' },
+                { path: 'conversations', model: 'Conversation', populate: [{ path: 'direct', model: 'User' }, { path: 'group', model: 'Group' }] },
+                { path: 'direct', model: 'User' },
+                { path: 'group', model: 'Group' },
+            ]);
 
         } catch (err) { throw new Error('Error for send message ' + err?.message) }
     }
+
 
     async remove ({ _id, user }) {
         try {
@@ -142,12 +232,9 @@ class MessageService {
 
             await message.remove()
 
-            await User.updateOne({ _id: user }, { $pull: { messages: message._id } })
-        
-            if (message?.receivers?.length > 0) {
-                await User.updateOne({ _id: { $in: message.receivers } }, { $pull: { receives: message._id } })
-            }
-        
+            // tira as mensagens de todas as conversas
+            await Conversation.updateMany({ _id: { $in: message.conversations } }, { $pull: { messages: message._id } })
+
             if (message?.reply) {
                 await Message.updateOne({ _id: message.reply }, { $pull: {  replies: message._id } })
             }
